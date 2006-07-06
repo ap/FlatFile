@@ -1,0 +1,17 @@
+Makefile.PL
+MANIFEST
+FlatFile.pm
+README
+t/00_basic.t
+t/01_passwd.t
+t/02_write.t
+t/03_delete.t
+t/04_append.t
+t/05_rec_count.t
+t/06_append_fs.t
+t/30_inherit.t
+t/31_inherit_rec.t
+t/32_quicklookup.t
+t/40_optional.t
+t/41_optional_undef.t
+TODO
