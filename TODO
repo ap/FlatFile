@@ -1,4 +1,6 @@
 
+Items with * are done.
+
 o test for FIELDSEP:
   default, input and output
   supplied as plain string, input and output
@@ -10,7 +12,7 @@ o Perhaps when a FIELDSEP and FIELDSEPSTR are both supplied, module
 
 o append should have a version that takes a hash
 
-o Should support databases in which fields past the nth are optional
+* Should support databases in which fields past the nth are optional
 
 o should have a record ->set method so that fields can be set when
   their names are not known at compile time
@@ -35,9 +37,33 @@ o The field-access methods are inserted directly into RECCLASS; is
 
 o Comment syntax; some of these files have comments in them
 
-o Document Subclasses better.  Document new Subclass->lookup and
+* Document Subclasses better.  Document new Subclass->lookup and
   Subclass->c_lookup usage
 
 o Need better control over open routines.  User may need to supply
-  already-open, locked filehandle, for example.
+  already-open, locked filehandle, for example.  How does this work in
+  conjunction with the writing strategy of
+  create-a-new-file-and-rename-it?  How can we accomodate user locking
+  strategies?
+
+o ->new(FILE => undef) returns bad error message: "required key FILE missing".
+
+* The garbage collection problems may be insurmountable.  But even if
+  not:
+
+o Suppose one does
+
+        ($a) = File->lookup(color => "red");
+        ($b) = File->lookup(color => "red");
+        $a->set_color("green");
+        is($b->color, "green");
+
+  It should work, but in the 0.03 design it cannot be made to
+  work. Add a test for this.
+        
+
+* Convert I/O system to use Tie::File instead of doing everything manually
+
+  o Now how do you get back the old semantics that would write a new
+    file and then atomically rename it atop the old one?
 

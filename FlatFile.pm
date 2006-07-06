@@ -8,7 +8,8 @@
 #
 
 package FlatFile;
-$VERSION = "0.03";
+use Tie::File;
+$VERSION = "0.10";
 use strict;
 use Carp 'croak';
 
@@ -124,9 +125,7 @@ order.
 By default, the file will be opened for reading only.  To override
 this, supply a C<MODE> argument whose value is a mode string like the
 one given as the second argument to the Perl built-in C<open>
-function.  For read-write access, you should probably use C<< MODE => "+<" >>.
-To modify the database, you will need permission to write the data
-file itself and the directory in which it resides.
+function.  For read-write access, you should probably use C<< MODE => "+<" >>.  As of version 0.10, only C<< < >>, C<< +< >>, and C<< +> >> are supported.
 
 The file will be assumed to contain "records" that are divided into
 "fields".  By default, records are assumed to be terminated with a
@@ -203,9 +202,6 @@ sub new {
   $self->{TMPFILE} = $self->{FILE} . ".tmp"
     unless exists $opts{TMPFILE};
 
-  $self->_mode_ok() or
-    croak "unknown mode '$self->{MODE}'; aborting";
-
   $self->_calculate_field_offsets;
 
   $self->_generate_record_class;
@@ -214,8 +210,10 @@ sub new {
   return $self->_open_file ? $self : ();
 }
 
-my %MODE_OK = ('<', 1, '+<', 1, '>', 1, '+>', 1, '>>', 1, '+>>', 1);
-sub _mode_ok {
+use Fcntl qw(O_RDONLY O_RDWR O_TRUNC);
+my %MODE_OK = ('<', O_RDONLY, '+<', O_RDWR,
+               '+>', O_RDWR|O_TRUNC);
+sub _mode_flags {
   my $self = shift;
   $MODE_OK{$self->{MODE}};
 }
@@ -229,9 +227,13 @@ sub _open_file {
   my $self = shift;
   my $file = $self->{FILE};
   my $mode = $self->{MODE};
+  my $flags = $self->_mode_flags();
+  defined $flags or croak "Invalid mode '$mode'";
 
-  open my($fh), $mode, $file or return;
-  $self->{fh} = $fh;
+  tie my(@file), "Tie::File", $file, mode => $flags,
+    recsep => $self->{RECSEP}, autochomp => 1,
+      or return;
+  $self->{file} = \@file;
   return 1;
 }
 
@@ -285,7 +287,6 @@ sub _generate_record_class {
   *{"$classname\::FIELD"} = $self->{OFF};    # create %FIELD hash
   *{"$classname\::FIELD"} = $self->{FIELDS}; # create @FIELD hash
   *{"$classname\::DEFAULT"} = $self->{DEFAULTS}; # create %DEFAULT hash
-  ${"$classname\::DB"} = $self;
   return 1;
 }
 
@@ -322,7 +323,6 @@ sub lookup {
       return $rec unless wantarray();
       push @result, $rec;
     }
-    
   }
   return @result;
 }
@@ -345,7 +345,7 @@ we can search for people named "Chen" like this:
         sub is_chen {
           my %data = @_;
           $data{gecos} =~ /\bChen$/;
-        }       
+        }
 
         @chens = $db->c_lookup(\&is_chen);
 
@@ -382,7 +382,7 @@ sub c_lookup {
 sub rewind {
   my $self = shift;
   $self->{recno} = 0;
-  return seek $self->{fh}, 0, 0;
+  return 1;
 }
 
 =head2 C<< $db->rec_count >>
@@ -394,22 +394,12 @@ Return a count of the number of records in the database.
 sub rec_count {
   my $self = shift;
 
-  # return saved count if available
-  return $self->{rec_count} if defined $self->{rec_count};
-  # otherwise, count the records
-
-  my $pos = $self->save_position;
-
-  # count records
-  $self->rewind;
-  1 while $self->nextrec;
-
-  return $self->{rec_count};
+  return scalar(@{$self->{file}});
 }
 
 sub save_position {
   my $self = shift;
-  FlatFile::Position->new($self->{fh}, \($self->{recno}));
+  FlatFile::Position->new(\($self->{recno}));
 }
 
 =head2 C<< my $record = $db->nextrec >>
@@ -436,25 +426,9 @@ The following code will scan all the records in the database:
 
 sub nextrec {
   my $self = shift;
-  my ($line, $recno);
+  my $recno = $self->{recno};
 
-  # Read next line of data out of the file
-  # until either we reach EOF
-  # ignore records marked as "deleted" in the object
-  # also sets $recno to the record number of the line returned
-  do {
-    my $fh = $self->{fh};
-    local $/ = $self->{RECSEP};
-    $line = <$fh>;
-
-    unless (defined $line) { # end of file
-      $self->{rec_count} ||= $self->{recno};
-      return;
-    }
-
-    chomp $line;
-    $recno = ++$self->{recno};
-  } while $self->{DELETE}{$recno};
+  $recno++ while $self->{DELETE}{$recno};
 
   # Someone may have done an in-memory update of the record
   # we just read.  If so, discard the disk data and
@@ -464,13 +438,16 @@ sub nextrec {
 
   # if it wasn't updated, the continue processing
   # with the disk data
+  my $line = $self->{file}[$recno];
+  return unless defined $line;
   my @data = split $self->{FIELDSEP}, $line, -1;
+  $self->{recno} = $recno+1;
   return $self->make_rec($recno, @data);
 }
 
 sub make_rec {
   my ($self, $recno, @data) = @_;
-  return $self->{RECCLASS}->new($recno, @data);
+  return $self->{RECCLASS}->new($self, $recno, @data);
 }
 
 =head2 C<< $db->append(@data) >>
@@ -489,11 +466,8 @@ values.
 # TODO: fail unless ->_writable
 sub append {
   my ($self, @data) = @_;
-  my $fh = $self->{fh};
   my $pos = $self->save_position;
-  seek $fh, 0, 2 or return;
-  print $fh $self->make_rec(0, @data)->as_string or return;
-  $self->{rec_count}++ if defined $self->{rec_count};
+  push @{$self->{file}}, $self->make_rec(0, @data)->as_string or return;
   return 1;
 }
 
@@ -501,7 +475,7 @@ sub _update {
   my ($self, $new_rec) = @_;
   my $id = $new_rec->id;
   return if $self->{DELETE}{$id};
-  $self->{UPDATE}{$id} = $new_rec;
+  $self->{UPDATE}{$id} = $new_rec->as_string;
 }
 
 =head2 C<< $db->delete_rec($record) >>
@@ -535,39 +509,31 @@ C<flush> is also called automatically when the program exits.
 
 =cut
 
-# copy input file, writing out updated records
-# then atomically replace input file with updated copy
+# Old behavior was lost:
+### copy input file, writing out updated records
+### then atomically replace input file with updated copy
+# Fix this XXX
 sub flush {
   my $self = shift;
 
   # Quick return if there's nothing to do
   return unless $self->_writable;
-  return if keys %{$self->{UPDATE}} == 0 
+  return if keys %{$self->{UPDATE}} == 0
     && keys %{$self->{DELETE}} == 0;
 
-  open my($out), "+>", $self->{TMPFILE}
-    or return;
+  my $f = tied(@{$self->{file}});
+  $f->defer;
 
-  $self->rewind or return;
-  while (my $rec = $self->nextrec) {
-    my $dat = $rec->as_string;
-    print $out $dat or return;
-#    $self->_flushfh($out);      # for debugging XX
+  for my $k (keys %{$self->{UPDATE}}) {
+    $self->{file}[$k] = $self->{UPDATE}{$k};
+  }
+  for my $k (sort {$b <=> $a} keys %{$self->{DELETE}}) {
+    splice @{$self->{file}}, $k, 1;
   }
 
-  rename $self->{TMPFILE}, $self->{FILE} or return;
-
   %{$self->{UPDATE}} = %{$self->{DELETE}} = ();
-  $self->_flushfh($out);
-  $self->{fh} = $out;
+  $f->flush;
   return 1;
-}
-
-sub _flushfh {
-  my ($self, $fh) = @_;
-  my $ofh = select $fh;
-  local $| = 1;
-  print $fh "";
 }
 
 sub DESTROY {
@@ -612,12 +578,6 @@ Other methods follow.
 package FlatFile::Rec;
 use Carp 'croak';
 
-=head2 C<< $record->fields >>
-
-Returns a list of the fields in the object, in order.
-
-=cut
-
 sub default {
   my $self = shift;
   my $class = ref($self) || $self;
@@ -627,6 +587,12 @@ sub default {
   return wantarray ? (exists $d->{$field}, $d->{$field}) : $d->{$field};
 }
 
+=head2 C<< $record->fields >>
+
+Returns a list of the fields in the object, in order.
+
+=cut
+
 sub fields {
   my $self = shift;
   my $class = ref($self) || $self;
@@ -635,7 +601,7 @@ sub fields {
 }
 
 sub new {
-  my ($class, $id, @data) = @_;
+  my ($class, $db, $id, @data) = @_;
   my $self = {};
   my %data;
 
@@ -657,6 +623,7 @@ sub new {
   }
 
   $self->{data} = \%data;
+  $self->{db} = $db;
   $self->{id} = $id;
   bless $self => $class;
 }
@@ -673,10 +640,7 @@ change to disk, even if the original database object was unavailable:
 =cut
 
 sub db {
-  my $self = shift;
-  my $class = ref($self) || $self;
-  no strict 'refs';
-  return $ {"$class\::DB"};
+  $_[0]{db};
 }
 
 sub id {
@@ -741,11 +705,9 @@ sub delete {
 package FlatFile::Position;
 
 sub new {
-  my ($class, $fh, $record_number_ref) = @_;
-  my $off = tell $fh;
+  my ($class, $record_number_ref) = @_;
   my $recno = $$record_number_ref;
   my $self = sub {
-    seek $fh, $off, 0;
     $$record_number_ref = $recno;
   };
   bless $self => $class;
@@ -756,22 +718,19 @@ sub DESTROY {
   $self->();
 }
 
-=head2 BUGS
+=head1 BUGS
 
 Various design defects; see TODO file
 
-->flush should be unnecessary.  The garbage-collection problems are
-fixable with better design; see http://www.plover.com/blog/prs/objects.html
+This module is ALPHA-LEVEL software.  Everything about it, including
+the interface, might change in future versions.
 
-The module should probably have used Tie::File for I/O, instead of
-doing everything manually.
-
-=head2 AUTHOR
+=head1 AUTHOR
 
 Mark Jason Dominus (mjd@plover.com)
 
-  $Id: FlatFile.pm,v 1.13 2006/07/05 17:00:21 mjd Exp $
-  $Revision: 1.13 $
+  $Id: FlatFile.pm,v 1.3 2006/07/06 23:34:03 mjd Exp $
+  $Revision: 1.3 $
 
 =cut
 
