@@ -1,8 +1,12 @@
-FlatFile version 0.10
+FlatFile version 0.11
 =====================
 
 Functions for simple, lightweight management of flat-file databases
 
+CHANGES FROM 0.10 -> 0.11:
+
+Bug fixes in the handling of inherited classes, particularly those
+with nonstandard field separators.
 
 CHANGES FROM 0.04 -> 0.10:
 

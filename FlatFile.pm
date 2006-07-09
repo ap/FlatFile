@@ -9,7 +9,7 @@
 
 package FlatFile;
 use Tie::File;
-$VERSION = "0.10";
+$VERSION = "0.11";
 use strict;
 use Carp 'croak';
 
@@ -84,33 +84,15 @@ my %default_default =
    DEFAULTS => {},
   );
 
-
-
-# Set the default for 
-sub _default {
-  my $self = shift();
-  my $key = uc shift();
-
-  # If it's an object, just get the value from the object
-  if (ref $self && exists $self->{$key}) {
-    return $self->{$key};
+sub _classvars {
+  my $class = shift;
+  return {} if $class eq __PACKAGE__;
+  my %cv;
+  for my $k (keys %default_default) {
+    my $val = do { no strict 'refs'; $ {"$class\::$k"} };
+    $cv{$k} = $val if defined $val;
   }
-
-  # otherwise, it's a class name, so search the class for a package variable
-  # with the all-uppercase version of the key name
-  my $class = $self;
-  my $val = do { no strict 'refs'; $ {"$class\::$key"} };
-  return $val if defined $val;
-
-  # Otherwise, use the hardwired %default_default hash above
-  # in which an "undef" entry means "there is no default"
-  if (defined $default_default{$key}) {
-    return $default_default{$key};
-  } elsif (exists $default_default{$key}) {
-    croak "Required key '$key' unspecified";  
-  } else {
-    croak "Unknown key '$key'";
-  }
+  \%cv;
 }
 
 =head1 Methods
@@ -172,29 +154,32 @@ C<FlatFile::Rec>.
 my $classid = "A";
 sub new {
   my ($class, %opts) = @_;
-  my $self;
+  my $self = {recno => 0};
 
-  # TODO: TESTS for this logic
-  if (exists $opts{FIELDSEP}) {
-    if (ref $opts{FIELDSEP}) {
-      defined($opts{FIELDSEPSTR})
-        or croak "FIELDSEPSTR required in conjunction with FIELDSEP";
-    } else {
-      # literal string; compile it to a pattern
-      my $str = $opts{FIELDSEP};
-      $opts{FIELDSEPSTR} = $str;
-      $opts{FIELDSEP} = "\Q$str";
-    }
-  }
+  bless $self => $class;
 
   # acquire object properties from argument list (%opts)
   # or from class defaults or default defaults, as appropriate.
   # _default will detect missing required values
   # and unknown key names
-  for my $k (keys %default_default) {
-    $self->{$k} = defined($opts{$k}) ? $opts{$k} : $class->_default($k);
+  for my $source (\%opts, $class->_classvars) {
+    $self->_acquire_settings($source, check_keys => 1);
   }
-  bless $self => $class;
+
+  # TODO: TESTS for this logic
+  if (exists $self->{FIELDSEP}) {
+    if (ref $self->{FIELDSEP}) {
+      defined($self->{FIELDSEPSTR})
+        or croak "FIELDSEPSTR required in conjunction with FIELDSEP";
+    } else {
+      # literal string; compile it to a pattern
+      my $str = $self->{FIELDSEP};
+      $self->{FIELDSEPSTR} = $str;
+      $self->{FIELDSEP} = "\Q$str";
+    }
+  }
+
+  $self->_acquire_settings(\%default_default, mandatory => 1);
 
   $self->{RECCLASS} = join "::", $self->{RECBASECLASS}, $classid++
     unless $self->{RECCLASS};
@@ -208,6 +193,21 @@ sub new {
 
 
   return $self->_open_file ? $self : ();
+}
+
+sub _acquire_settings {
+  my ($self, $settings, %opt)  = @_;
+  for my $k (keys %$settings) {
+    if ($opt{check_keys} && not exists $default_default{$k}) {
+      croak "unknown key '$k'";
+    }
+    if (! exists $self->{$k} && exists $settings->{$k}) {
+      if ($opt{mandatory} && not defined $settings->{$k}) {
+        croak "Required key '$k' unspecified";        
+      }
+      $self->{$k} = $settings->{$k};
+    }
+  }
 }
 
 use Fcntl qw(O_RDONLY O_RDWR O_TRUNC);
@@ -729,8 +729,8 @@ the interface, might change in future versions.
 
 Mark Jason Dominus (mjd@plover.com)
 
-  $Id: FlatFile.pm,v 1.3 2006/07/06 23:34:03 mjd Exp $
-  $Revision: 1.3 $
+  $Id: FlatFile.pm,v 1.4 2006/07/09 06:53:37 mjd Exp $
+  $Revision: 1.4 $
 
 =cut
 
