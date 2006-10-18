@@ -423,13 +423,12 @@ sub nextrec {
 
   # Someone may have done an in-memory update of the record
   # we just read.  If so, discard the disk data and
-  # return the in-memory version of the record instead.
-  return $self->{UPDATE}{$recno}
-    if exists $self->{UPDATE}{$recno};
-
+  # proceed with the in-memory version of the record instead.
   # if it wasn't updated, the continue processing
   # with the disk data
-  my $line = $self->{file}[$recno];
+  my $line = exists $self->{UPDATE}{$recno}
+	? $self->{UPDATE}{$recno}
+	: $self->{file}[$recno];
   return unless defined $line;
   my @data = split $self->{FIELDSEP}, $line, -1;
   $self->{recno} = $recno+1;
