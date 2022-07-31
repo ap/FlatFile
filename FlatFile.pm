@@ -33,7 +33,7 @@ FlatFile - Manipulate flat-file databases
   # Usage pattern B:  subclass
   #  PasswordFile.pm:
   package PasswordFile;
-  use base FlatFile;
+  use FlatFile;
   our @ISA = 'FlatFile';
   our @FIELDS = qw(username password uid gid gecos home shell);
   our $RECSEP = "\n";

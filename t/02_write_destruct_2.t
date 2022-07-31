@@ -80,16 +80,17 @@ is($DESTROY, 7);
 is($DESTROY, 8);
 
 
+BEGIN {
 package FF;
-use base FlatFile;
+use FlatFile;
+our @ISA = 'FlatFile';
 
 sub DESTROY {
   $main::DESTROY++;
   $main::DESTROYED{$_[0]} = 1;
   $_[0]->SUPER::DESTROY;
 }
-
-package main;
+}
 
 __DATA__
 apple  red

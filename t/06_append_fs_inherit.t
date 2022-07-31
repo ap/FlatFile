@@ -9,7 +9,8 @@ print F <DATA>;
 close F;
 
 package FRUIT;
-use base 'FlatFile';
+use FlatFile;
+our @ISA = 'FlatFile';
 our $FIELDS = [qw(fruit color)];
 our $FIELDSEP = ":";
 
