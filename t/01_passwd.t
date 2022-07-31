@@ -8,8 +8,10 @@ File::Copy::copy("/etc/passwd", $FILE);
 	@line = grep !/^[\x09\x20]*(?:#|$)/, @line; # avoid encountering comment/empty lines
 }
 
-use Test::More tests => 5;
+use Test::More;
 use FlatFile;
+plan skip_all => 'Missing or empty /etc/passwd' if ! -s '/etc/passwd';
+plan tests => 5;
 ok(1); # If we made it this far, we're ok.
 
 my $pw = FlatFile->new(FILE => $FILE,

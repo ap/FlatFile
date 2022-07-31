@@ -1,5 +1,7 @@
-use Test::More tests => 8;
+use Test::More;
 use FlatFile;
+plan skip_all => 'Missing or empty /etc/passwd' if ! -s '/etc/passwd';
+plan tests => 8;
 ok(1); # If we made it this far, we're ok.
 
 package PW;
