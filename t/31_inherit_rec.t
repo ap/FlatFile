@@ -4,11 +4,16 @@ ok(1); # If we made it this far, we're ok.
 
 package PW;
 use File::Copy ();
+use Tie::File ();
 use vars ('@ISA', '$FILE', '@FIELDS', '$FIELDSEP', '$RECCLASS');
 @ISA = qw(FlatFile);
 my @TO_REMOVE = $FILE = "/tmp/FlatFile.$$";
 END { unlink @TO_REMOVE }
 File::Copy::copy("/etc/passwd", $FILE);
+{
+	tie my @line, 'Tie::File', $FILE or die "Couldn't Tie::File $FILE: $!\n";
+	@line = grep !/^[\x09\x20]*(?:#|$)/, @line; # avoid encountering comment/empty lines
+}
 $FIELDS = [qw(uname passwd uid gid gecos home shell)];
 $FIELDSEP = ":";
 $RECCLASS = "PW::Rec";

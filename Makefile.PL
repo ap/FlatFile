@@ -13,6 +13,7 @@ my %META = (
 			requires => {
 				'Test::More'    => 0,
 				'File::Copy'    => 0,
+				'Tie::File'     => 0,
 			},
 		},
 		runtime      => {

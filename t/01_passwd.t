@@ -1,7 +1,12 @@
 my @TO_REMOVE = my $FILE = "/tmp/FlatFile.$$";
 END { unlink @TO_REMOVE }
 use File::Copy ();
+use Tie::File ();
 File::Copy::copy("/etc/passwd", $FILE);
+{
+	tie my @line, 'Tie::File', $FILE or die "Couldn't Tie::File $FILE: $!\n";
+	@line = grep !/^[\x09\x20]*(?:#|$)/, @line; # avoid encountering comment/empty lines
+}
 
 use Test::More tests => 5;
 use FlatFile;
