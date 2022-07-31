@@ -10,7 +10,6 @@ print F <DATA>;
 close F;
 
 package FRUIT;
-use blib;
 use base 'FlatFile';
 our $FIELDS = [qw(fruit color)];
 our $FIELDSEP = ":";

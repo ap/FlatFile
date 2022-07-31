@@ -6,7 +6,6 @@ my @TO_REMOVE = my $FILE = "/tmp/FlatFile.$$";
 END { unlink @TO_REMOVE }
 
 package PW;
-use File::Copy ();
 use vars ('@ISA', '$FILE', '@FIELDS', '$FIELDSEP');
 @ISA = qw(FlatFile);
 $PW::FILE = $FILE;
