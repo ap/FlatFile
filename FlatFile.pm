@@ -1,12 +1,3 @@
-#!/usr/bin/perl
-#
-# Home filesystems are listed in @HOMEDEVS
-# Minimal values are listed in @NO_QUOTA
-#
-# $ID: $
-# $Author: mjd $
-#
-
 package FlatFile;
 use Tie::File;
 $VERSION = "0.11";
@@ -718,6 +709,12 @@ sub DESTROY {
   $self->();
 }
 
+1;
+
+__END__
+
+=pod
+
 =head1 BUGS
 
 Various design defects; see TODO file
@@ -725,14 +722,4 @@ Various design defects; see TODO file
 This module is ALPHA-LEVEL software.  Everything about it, including
 the interface, might change in future versions.
 
-=head1 AUTHOR
-
-Mark Jason Dominus (mjd@plover.com)
-
-  $Id: FlatFile.pm,v 1.4 2006/07/09 06:53:37 mjd Exp $
-  $Revision: 1.4 $
-
 =cut
-
-1;
-
