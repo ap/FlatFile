@@ -1,5 +1,9 @@
 Release history for FlatFile
 
+0.12  2006-07-09
+	- Fix for return value of nextrec after update (RT #22167, Ricardo Signes)
+	- Fix for test failures on OSes with extended /etc/passwd format (RT #129146)
+
 0.11  2006-07-09
 
 Bug fixes in the handling of inherited classes, particularly those
