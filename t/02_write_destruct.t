@@ -1,6 +1,6 @@
-#
+use strict; use warnings;
+
 # same as 02_write, except without the ->flush calls
-#
 
 use Test::More tests => 17;
 use FlatFile;

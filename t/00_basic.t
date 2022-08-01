@@ -1,3 +1,5 @@
+use strict; use warnings;
+
 use Test::More tests => 4;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.

@@ -1,3 +1,5 @@
+use strict; use warnings;
+
 use Test::More;
 use FlatFile;
 plan skip_all => 'Missing or empty /etc/passwd' if ! -s '/etc/passwd';
@@ -7,7 +9,7 @@ ok(1); # If we made it this far, we're ok.
 package PW;
 use File::Copy ();
 use Tie::File ();
-use vars ('@ISA', '$FILE', '@FIELDS', '$FIELDSEP');
+our (@ISA, $FILE, $FIELDS, $FIELDSEP);
 @ISA = qw(FlatFile);
 my @TO_REMOVE = $FILE = "/tmp/FlatFile.$$";
 END { unlink @TO_REMOVE }

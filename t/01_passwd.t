@@ -1,3 +1,5 @@
+use strict; use warnings;
+
 my @TO_REMOVE = my $FILE = "/tmp/FlatFile.$$";
 END { unlink @TO_REMOVE }
 use File::Copy ();

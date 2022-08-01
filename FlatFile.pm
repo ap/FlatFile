@@ -1,7 +1,8 @@
+use strict; use warnings;
+
 package FlatFile;
 use Tie::File;
-$VERSION = "0.11";
-use strict;
+our $VERSION = '0.11';
 use Carp 'croak';
 
 =head1 NAME

@@ -1,3 +1,5 @@
+use strict; use warnings;
+
 use Test::More tests => 7;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.
@@ -10,7 +12,7 @@ print F <DATA>;
 close F;
 
 package PW;
-use vars ('@ISA', '$FILE', '@FIELDS', '$FIELDSEP', '$RECCLASS');
+our (@ISA, $FILE, $FIELDS, $FIELDSEP, $RECCLASS);
 @ISA = qw(FlatFile);
 $FILE = $tmp;
 $FIELDS = ['fruit', 'color'];

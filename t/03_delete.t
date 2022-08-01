@@ -1,3 +1,5 @@
+use strict; use warnings;
+
 use Test::More tests => 11;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.
@@ -16,7 +18,7 @@ my $f = FlatFile->new(FILE => $FILE,
 ok($f);
 
 # Open, read, delete first
-@redfruit2 = $f->lookup(color => "red");
+my @redfruit2 = $f->lookup(color => "red");
 is(scalar(@redfruit2), 2);
 $redfruit2[0]->delete;
 my @redfruit1a = $f->lookup(color => "red");

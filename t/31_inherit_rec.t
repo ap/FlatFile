@@ -1,3 +1,5 @@
+use strict; use warnings;
+
 use Test::More;
 use FlatFile;
 plan skip_all => 'Missing or empty /etc/passwd' if ! -s '/etc/passwd';
@@ -7,7 +9,7 @@ ok(1); # If we made it this far, we're ok.
 package PW;
 use File::Copy ();
 use Tie::File ();
-use vars ('@ISA', '$FILE', '@FIELDS', '$FIELDSEP', '$RECCLASS');
+our (@ISA, $FILE, $FIELDS, $FIELDSEP, $RECCLASS);
 @ISA = qw(FlatFile);
 my @TO_REMOVE = $FILE = "/tmp/FlatFile.$$";
 END { unlink @TO_REMOVE }
@@ -21,7 +23,7 @@ $FIELDSEP = ":";
 $RECCLASS = "PW::Rec";
 
 package PW::Rec;
-@ISA = qw(FlatFile::Rec);
+our @ISA = qw(FlatFile::Rec);
 sub bingle { $main::OK = 1 }
 sub nextuid { my $self = shift; $self->uid + 1; }
 
@@ -36,5 +38,5 @@ is($root->uid, 0, "root uid is 0");
 is($root->get_uid, 0, "root uid is 0");
 eval { $root->bingle };
 is($@, "", "bingle didn't fail");
-is($OK, 1, "bingled");
+is(our $OK, 1, "bingled");
 is($root->nextuid, 1, "nextuid worked");
