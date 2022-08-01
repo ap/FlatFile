@@ -1,4 +1,3 @@
-
 use Test::More tests => 5;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.

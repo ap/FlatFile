@@ -27,11 +27,6 @@ is(scalar(@afruit), 2);
 is($afruit[0]->fruit, "apple");
 is($afruit[1]->fruit, "banana");
 
-#########################
-
-# Insert your test code below, the Test module is use()ed here so read
-# its man page ( perldoc Test ) for help writing this test script.
-
 __DATA__
 apple  red
 banana green

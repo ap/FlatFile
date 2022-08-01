@@ -1,4 +1,3 @@
-
 use Test::More tests => 11;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.
@@ -47,8 +46,6 @@ ok($f);
 
 my @redfruit0b = $f->lookup(color => "red");
 is(scalar(@redfruit0b), 0);
-
-
 
 __DATA__
 apple  red

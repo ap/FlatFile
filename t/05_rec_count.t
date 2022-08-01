@@ -1,9 +1,3 @@
-# Before `make install' is performed this script should be runnable with
-# `make test'. After `make install' it should work as `perl test.pl'
-
-#########################
-
-
 use Test::More tests => 6;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.
@@ -34,7 +28,6 @@ my $r2 = $f->nextrec;
 is($f->rec_count, 4);
 my $r3 = $f->nextrec;
 is($r3->fruit, "cherry");
-
 
 __DATA__
 apple  red

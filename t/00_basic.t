@@ -1,5 +1,3 @@
-#!/usr/bin/perl
-
 use Test::More tests => 4;
 use FlatFile;
 ok(1); # If we made it this far, we're ok.
@@ -17,4 +15,3 @@ ok($f);
 
 is($f->field_separator_string, ":", "field separator");
 is($f->record_separator, "\n", "record separator");
-

@@ -31,9 +31,3 @@ eval { $root->bingle };
 is($@, "", "bingle didn't fail");
 is($OK, 1, "bingled");
 is($root->nextuid, 1, "nextuid worked");
-
-#########################
-
-# Insert your test code below, the Test module is use()ed here so read
-# its man page ( perldoc Test ) for help writing this test script.
-

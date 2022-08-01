@@ -90,13 +90,6 @@ ok($f);
   is($banana->color, "yellow", "banana still ripe");
 }
 
-
-
-#########################
-
-# Insert your test code below, the Test module is use()ed here so read
-# its man page ( perldoc Test ) for help writing this test script.
-
 __DATA__
 apple  red
 banana green

@@ -1,5 +1,3 @@
-
-
 use Test::More tests => 16;
 
 $DESTROY=0;
