@@ -38,7 +38,7 @@ MANIFEST :
 distdir : boilerplate
 .PHONY  : boilerplate
 boilerplate : distmeta
-	$(PERL) -I. boilerplate.pl $(DISTVNAME)
+	$(PERL) -I. inc/boilerplate.pl $(DISTVNAME)
 
 ## BOILERPLATE ###############################################################
 require ExtUtils::MakeMaker;
