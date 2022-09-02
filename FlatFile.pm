@@ -2,7 +2,7 @@ use strict; use warnings;
 
 package FlatFile;
 use Tie::File;
-our $VERSION = '0.12';
+our $VERSION = '0.13';
 use Carp 'croak';
 
 =head1 NAME

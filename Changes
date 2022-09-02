@@ -1,5 +1,9 @@
 Release history for FlatFile
 
+0.13  Fri 02 Sep 2022
+	- No functional changes
+	- Packaging fix to stop installing boilerplate.pl
+
 0.12  Mon 01 Aug 2022
 	- Fix for return value of nextrec after update (RT #22167, Ricardo Signes)
 	- Fix for test failures on OSes with extended /etc/passwd format (RT #129146)
