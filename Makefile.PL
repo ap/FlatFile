@@ -8,26 +8,25 @@ my %META = (
 	author           => 'Mark Jason Dominus',
 	x_copyright      => { holder => 'Mark Jason Dominus', year => 2006 },
 	license          => 'perl_5',
-	prereqs          => {
-		test         => {
-			requires => {
-				'Test::More'    => 0,
-				'File::Copy'    => 0,
-				'Tie::File'     => 0,
-			},
-		},
-		runtime      => {
-			requires => {
-				perl            => '5.006',
-				'Tie::File'     => 0,
-			},
-		},
-	},
-	dynamic_config => 0,
 	resources      => {
+		license    => [ 'http://dev.perl.org/licenses/' ],
 		repository => { type => 'git', url => "$sc.git", web => $sc },
 		bugtracker => { web => $bt },
-		license    => [ 'http://dev.perl.org/licenses/' ],
+	},
+	dynamic_config => 0,
+	prereqs => {
+		runtime => {
+			requires => {qw(
+				perl 5.006
+				Tie::File 0
+			)},
+		},
+		test => {
+			requires => {qw(
+				Test::More 0
+				File::Copy 0
+			)},
+		},
 	},
 );
 
